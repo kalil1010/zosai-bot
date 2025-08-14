@@ -1,22 +1,25 @@
-const { Telegraf, Markup } = require('telegraf');
-const session = require('telegraf/session');
+const { Telegraf } = require('telegraf');
 const keyboards = require('./keyboards');
 
-// Initialize ZOSAI bot with your actual token
 const bot = new Telegraf('8472455459:AAESlRVmWsuzsam9K6PYkz7Yw9-xpiPev_4');
 
 console.log('🤖 Initializing ZOSAI Bot...');
 
-// Middleware
-bot.use(session());
+// Simple in-memory session storage (for basic functionality)
+const sessions = new Map();
 
-// Simple logging middleware
+// Simple middleware for session handling
 bot.use((ctx, next) => {
-  console.log(`📱 ZOSAI: ${ctx.updateType} from ${ctx.from?.username || ctx.from?.first_name}`);
+  const userId = ctx.from?.id;
+  if (userId) {
+    if (!sessions.has(userId)) {
+      sessions.set(userId, {});
+    }
+    ctx.session = sessions.get(userId);
+  }
   return next();
 });
 
-// ZOSAI Start command - Role selection
 bot.start(async (ctx) => {
   const user = ctx.from;
   
@@ -25,137 +28,117 @@ bot.start(async (ctx) => {
   ctx.session.telegram_id = user.id;
   ctx.session.username = user.username;
   ctx.session.first_name = user.first_name;
-  ctx.session.last_name = user.last_name;
 
   const welcomeText = `🤖 Welcome to ZOSAI, ${user.first_name}!
 
 🚀 **Your AI-Powered Fashion Assistant**
 
-I use artificial intelligence to revolutionize your shopping experience:
-
-📷 **Smart Photo Analysis** - Upload any clothing photo and I'll find matching outfits using advanced color analysis
-📍 **Location Intelligence** - Discover nearby stores based on your exact location  
-🎯 **Personalized Recommendations** - AI learns your style preferences for perfect matches
+📷 **Smart Photo Analysis** - Upload clothing photos for color matching
+📍 **Location Intelligence** - Discover nearby stores automatically  
+🎯 **Personalized Recommendations** - AI learns your style preferences
 ⭐ **Loyalty Rewards** - Earn points and unlock exclusive benefits
-🛍️ **Seamless Shopping** - From discovery to delivery, all in one chat
 
-**Ready to experience the future of fashion?**
+Ready to experience the future of fashion?
 Select your role to get started:`;
 
   await ctx.reply(welcomeText, keyboards.roleSelection);
 });
 
-// Role selection handlers for ZOSAI
+// Role handlers
 bot.action('role_customer', async (ctx) => {
   ctx.session.role = 'customer';
-  
-  const welcomeText = `🛍️ Welcome, ${ctx.session.first_name}!
+  await ctx.editMessageText(`🛍️ Welcome Customer! You can now:
 
-You're now set up as a **ZOSAI Customer**. Here's what you can do:
+👤 **AI Profile** - Set up your style preferences
+🏪 **Find Stores** - Discover nearby fashion stores  
+📷 **AI Photo Analysis** - Upload photos for color analysis
+🛒 **My Orders** - Track your purchases
+⭐ **ZOSAI Points** - Earn and redeem rewards
 
-👤 **AI Profile** - Set your measurements and style preferences for personalized AI recommendations
-🏪 **Find Stores** - Discover nearby clothing stores using location intelligence  
-📷 **AI Photo Analysis** - Upload photos for color-matched outfit recommendations
-🛒 **My Orders** - View and track your purchases with real-time updates
-⭐ **ZOSAI Points** - Check your rewards and redeem AI-curated benefits
-
-Let's start by setting up your AI profile for personalized recommendations!`;
-
-  await ctx.editMessageText(welcomeText, keyboards.customerMenu);
+Use the buttons below to get started!`, keyboards.customerMenu);
 });
 
 bot.action('role_store_owner', async (ctx) => {
   ctx.session.role = 'store_owner';
-  
-  const welcomeText = `🏪 Welcome, ${ctx.session.first_name}!
+  await ctx.editMessageText(`🏪 Welcome Store Owner! Your AI dashboard includes:
 
-You're now set up as a **ZOSAI Store Owner**. Your AI-powered dashboard includes:
+📊 **AI Dashboard** - Smart analytics and insights
+📦 **Smart Inventory** - Manage products with AI enhancement
+🏷️ **QR Code System** - Generate codes for inventory updates  
+⚡ **AI Flash Sales** - Create targeted promotional campaigns
+📋 **Order Management** - Process and fulfill customer orders
 
-📊 **AI Dashboard** - Smart analytics and insights about your store performance
-📦 **Smart Inventory** - Manage your items with AI-enhanced product photos
-➕ **Add Items** - Upload products with automatic AI image optimization
-🏷️ **QR Codes** - Generate smart QR codes for instant inventory updates
-⚡ **AI Flash Sales** - Create targeted promotional campaigns with AI audience selection
-📋 **Orders** - Process customer orders with intelligent fulfillment suggestions
-
-Start managing your store with ZOSAI's AI tools!`;
-
-  await ctx.editMessageText(welcomeText, keyboards.storeOwnerMenu);
+Start managing your store with ZOSAI's AI tools!`, keyboards.storeOwnerMenu);
 });
 
 bot.action('role_shipper', async (ctx) => {
   ctx.session.role = 'shipper';
-  
-  const welcomeText = `🚚 Welcome, ${ctx.session.first_name}!
+  await ctx.editMessageText(`🚚 Welcome Shipping Partner! Your tools include:
 
-You're now set up as a **ZOSAI Shipping Partner**. Your AI-powered tools include:
+📦 **My Shipments** - View assigned delivery tasks
+🔄 **Update Status** - Real-time delivery tracking
+📊 **Route Optimizer** - AI-powered efficient routes
+📞 **ZOSAI Support** - Technical assistance
 
-📦 **My Shipments** - View assigned delivery tasks with AI route optimization
-🔄 **Update Status** - Update delivery progress with real-time tracking
-📊 **AI Route Optimizer** - Get the most efficient delivery routes powered by AI
-📞 **ZOSAI Support** - Contact our technical support team
-
-Start managing your shipments with AI intelligence!`;
-
-  await ctx.editMessageText(welcomeText, keyboards.shipperMenu);
+Manage your deliveries with AI intelligence!`);
 });
 
 bot.action('role_admin', async (ctx) => {
   ctx.session.role = 'admin';
-  
-  const welcomeText = `⚙️ Welcome, ${ctx.session.first_name}!
+  await ctx.editMessageText(`⚙️ Welcome Admin! System management tools:
 
-You're now in **ZOSAI Admin Mode**. Your AI-powered administration tools include:
+👥 **User Management** - Oversee all user accounts
+🏪 **Store Oversight** - Manage store operations
+📊 **AI Analytics** - Advanced business intelligence
+💳 **Payment Monitoring** - Transaction oversight
+⚙️ **System Settings** - Configure ZOSAI parameters
 
-👥 **Users** - Manage all users with AI behavior insights
-🏪 **Stores** - Oversee store operations with performance analytics
-📊 **AI Analytics** - Advanced business intelligence and trend analysis
-💳 **Payments** - Monitor transactions and payment gateway integration
-⚙️ **ZOSAI Settings** - Configure system parameters and AI algorithms
-🔔 **Notifications** - Manage system alerts and user communications
-
-Access the complete ZOSAI administration suite!`;
-
-  await ctx.editMessageText(welcomeText, keyboards.adminMenu);
+Access the complete administration suite!`);
 });
 
-// Customer features
+// Handle button clicks
 bot.action('profile', async (ctx) => {
   await ctx.reply(`👤 **ZOSAI AI Profile Setup**
 
-To provide you with the best AI-powered recommendations, I need to learn about your style preferences.
-
-Please share:
+To provide personalized recommendations, please share:
 📏 Your measurements (height, weight)
-🎨 Your style preferences (casual, formal, trendy, etc.)
+🎨 Your style preferences (casual, formal, trendy)
 📍 Your location (for nearby store discovery)
 
-This helps ZOSAI's AI create a personalized fashion profile just for you!`);
+This helps ZOSAI's AI create your perfect fashion profile!`);
 });
 
 bot.action('find_stores', async (ctx) => {
   await ctx.reply(`🏪 **ZOSAI Store Discovery**
 
-ZOSAI uses location intelligence to find the perfect stores for you!
+ZOSAI uses location intelligence to find perfect stores for you!
 
-📍 Please share your location so I can:
+📍 Please share your location to:
 • Find nearby clothing stores
 • Show distance and ratings
-• Filter by your style preferences  
+• Filter by your preferences  
 • Display current promotions
-• Get real-time inventory updates
+• Get real-time inventory
 
-Tap the location button below to get started!`, keyboards.shareLocation);
+Tap the location button to get started!`, {
+    reply_markup: {
+      keyboard: [[{
+        text: '📍 Share My Location',
+        request_location: true
+      }]],
+      resize_keyboard: true,
+      one_time_keyboard: true
+    }
+  });
 });
 
 bot.action('upload_photo', async (ctx) => {
-  ctx.session.awaiting_photo = true;
   await ctx.reply(`📷 **ZOSAI AI Photo Analysis**
 
 Upload a photo of any clothing item and I'll use advanced AI to:
 
 🎨 **Color Analysis** - Extract the exact color palette
-🎯 **Style Matching** - Identify the style and pattern
+🎯 **Style Matching** - Identify style and pattern
 🛍️ **Smart Recommendations** - Find matching items from nearby stores
 📊 **Trend Analysis** - Show how it fits current fashion trends
 
@@ -165,12 +148,15 @@ Upload a photo of any clothing item and I'll use advanced AI to:
 • Avoid busy backgrounds
 
 Just send me the photo now! 📸`);
+  
+  // Set flag for awaiting photo
+  ctx.session.awaiting_photo = true;
 });
 
 bot.action('my_orders', async (ctx) => {
   await ctx.reply(`🛒 **Your ZOSAI Orders**
 
-Here's your order history with AI-powered insights:
+Here's your order history with AI insights:
 
 📦 **Active Orders:** 0
 ✅ **Completed Orders:** 0  
@@ -181,7 +167,7 @@ Here's your order history with AI-powered insights:
 • ZOSAI learns from each purchase to improve recommendations
 • Earn loyalty points with every order
 
-Ready to place your first order? Use /stores to find nearby shops!`);
+Ready to place your first order? Use the Find Stores button!`);
 });
 
 bot.action('loyalty_points', async (ctx) => {
@@ -204,13 +190,13 @@ Welcome to ZOSAI Points - your AI-curated rewards program!
 • 1000 points = Free shipping
 • 2000 points = Exclusive AI style consultation
 
-Start shopping to earn your first ZOSAI points!`, keyboards.loyaltyRewards);
+Start shopping to earn your first ZOSAI points!`);
 });
 
-// Handle photo uploads
+// Photo analysis
 bot.on('photo', async (ctx) => {
   if (!ctx.session.awaiting_photo) {
-    await ctx.reply('📷 To analyze a photo, please use the "AI Photo Analysis" button first.');
+    await ctx.reply('📷 To analyze a photo, please use the "AI Photo Analysis" button first from the menu.');
     return;
   }
   
@@ -218,9 +204,9 @@ bot.on('photo', async (ctx) => {
   
   await ctx.reply('🔍 **ZOSAI AI is analyzing your photo...**\n\nThis might take a moment while our advanced color analysis AI processes your image.');
   
-  // Simulate AI analysis delay
+  // Simulate AI analysis
   setTimeout(async () => {
-    const analysisText = `🎨 **ZOSAI AI Analysis Complete!**
+    const analysis = `🎨 **ZOSAI AI Analysis Complete!**
 
 **Detected Colors:**
 • Primary: Deep Blue (#1E3A8A) - 45%
@@ -234,17 +220,15 @@ bot.on('photo', async (ctx) => {
 🛍️ **Matching Items Found:**
 Based on this color palette, I found 12 items from 5 nearby stores that perfectly match your photo!
 
-Would you like to see the AI recommendations?`;
+💡 **ZOSAI Recommendation:** This color combination works great with navy accessories and white sneakers!
 
-    await ctx.reply(analysisText, keyboards.colorAnalysisResults([
-      { name: 'Deep Blue', hex: '#1E3A8A', confidence: 94 },
-      { name: 'Pure White', hex: '#FFFFFF', confidence: 92 },
-      { name: 'Silver Gray', hex: '#9CA3AF', confidence: 89 }
-    ]));
+🎁 **Bonus:** You earned 50 loyalty points for using AI photo analysis!`;
+    
+    await ctx.reply(analysis);
   }, 3000);
 });
 
-// Handle location sharing
+// Location sharing
 bot.on('location', async (ctx) => {
   const location = ctx.message.location;
   ctx.session.location = location;
@@ -259,11 +243,49 @@ ZOSAI AI has updated your location and found:
 🎯 **87 items** matching your style profile
 
 **Top Store Recommendations:**
-1. **Fashion Plus** - 2.1km away ⭐ 4.8
-2. **Style Hub** - 3.5km away ⭐ 4.6  
-3. **Trend Center** - 4.2km away ⭐ 4.5
+1. **Fashion Plus Cairo** - 2.1km away ⭐ 4.8/5
+   📍 Zamalek • 👔 Formal & Casual • 💰 Mid-range
 
-Ready to explore these stores?`, keyboards.storeFilters);
+2. **Style Hub** - 3.5km away ⭐ 4.6/5  
+   📍 New Cairo • 👗 Trendy & Modern • 💰 Affordable
+
+3. **Trend Center** - 4.2km away ⭐ 4.5/5
+   📍 Maadi • ✨ Designer & Luxury • 💰 Premium
+
+Ready to explore these stores and find your perfect outfit?`);
+});
+
+// Help command
+bot.help((ctx) => {
+  ctx.reply(`🤖 **ZOSAI - AI Fashion Marketplace Commands**
+
+🌟 **What makes ZOSAI special?**
+ZOSAI uses advanced artificial intelligence to personalize your fashion experience!
+
+👥 **Customer Commands:**
+/start - Welcome & role selection
+/help - Show this help menu
+/profile - Update your AI style profile
+/stores - Find nearby stores with location intelligence
+/orders - View your order history
+/points - Check loyalty points and rewards
+
+🔮 **ZOSAI AI Features:**
+• Advanced color palette analysis from photos
+• Machine learning style recommendations
+• Location-based intelligent store discovery  
+• Personalized outfit matching algorithms
+• Smart inventory predictions
+• AI-powered trend analysis
+
+💡 **Pro Tips:**
+• Upload clear, well-lit photos for best AI analysis
+• Enable location sharing for accurate recommendations
+• Complete your profile for personalized suggestions
+
+📞 **Support:** Contact @zosai_support
+🌐 **Website:** zosai.ai
+✨ **ZOSAI - Fashion Powered by AI** ✨`);
 });
 
 // Handle text messages
@@ -276,12 +298,14 @@ bot.on('text', async (ctx) => {
       await ctx.reply(`📦 **ZOSAI Order Tracking**
 
 Order #${orderId}:
-🔄 Status: Processing
-📍 Location: Store warehouse  
-🚚 Expected delivery: Tomorrow 2-4 PM
-📱 Tracking: ZOS${orderId}
+🔄 **Status:** Processing
+📍 **Location:** Store warehouse  
+🚚 **Expected Delivery:** Tomorrow 2-4 PM
+📱 **Tracking:** ZOS${orderId}
 
-**AI Prediction:** 95% chance of on-time delivery based on current traffic and weather conditions.`);
+**AI Prediction:** 95% chance of on-time delivery based on current traffic and weather conditions.
+
+💡 You'll receive real-time updates as your order moves through our AI-optimized logistics network!`);
     } else {
       await ctx.reply('Please provide an order ID. Example: /track 12345');
     }
@@ -289,72 +313,24 @@ Order #${orderId}:
     await ctx.reply(`🤖 I'm ZOSAI, your AI fashion assistant! 
 
 I didn't understand "${text}", but I can help you with:
+
+🎯 **Main Features:**
 • Finding stores and products
 • Analyzing photos for style matching  
 • Managing orders and tracking
 • Earning loyalty points
+• Getting personalized recommendations
 
-Use the menu buttons or type /help to see all my AI-powered features!`, keyboards.customerMenu);
+Use the menu buttons or type /help to see all my AI-powered features!
+
+Ready to start? Send /start to see the main menu! ✨`);
   }
 });
 
-// ZOSAI Help command
-bot.help((ctx) => {
-  const helpText = `🤖 **ZOSAI - AI Fashion Marketplace Commands**
-
-🌟 **What makes ZOSAI special?**
-ZOSAI uses advanced artificial intelligence to personalize your fashion experience like never before!
-
-👥 **Customer Commands:**
-/profile - Update your AI style profile for better recommendations
-/stores - Find nearby stores using location intelligence
-/upload - Upload photo for AI color and style analysis
-/orders - View your order history and tracking
-/points - Check loyalty points and redeem AI-curated rewards
-/track <order_id> - Real-time delivery tracking with AI predictions
-
-🏪 **Store Owner Commands:**
-/dashboard - AI-powered store analytics dashboard
-/inventory - Smart inventory management with AI insights
-/additem - Add new item with AI image enhancement
-/qrcode - Generate smart QR codes for instant updates
-/flashsale - Create AI-targeted promotional campaigns
-
-🚚 **Shipping Partner Commands:**
-/shipments - View AI-optimized delivery routes
-/update - Update delivery status with GPS tracking
-
-⚙️ **Admin Commands:**
-/admin - System administration with AI analytics
-/users - User management with behavior insights
-/analytics - Advanced AI-powered business intelligence
-
-🔮 **ZOSAI AI Features:**
-• Advanced color palette analysis from any photo
-• Machine learning style preference system
-• Location-based intelligent recommendations  
-• Personalized outfit matching algorithms
-• Smart inventory predictions for store owners
-• Dynamic pricing insights and trend analysis
-• AI-powered customer behavior analytics
-
-💡 **Pro Tips:**
-• Upload clear, well-lit photos for best AI analysis
-• Enable location sharing for accurate store recommendations
-• Complete your profile for personalized AI suggestions
-• Use /track to get AI-predicted delivery times
-
-📞 **Support:** Contact @zosai_support for assistance
-🌐 **Website:** Visit zosai.ai for more AI-powered features
-✨ **ZOSAI - Fashion Powered by AI** ✨`;
-
-  ctx.reply(helpText);
-});
-
-// Error handling for ZOSAI
+// Error handling
 bot.catch((err, ctx) => {
   console.error('🚨 ZOSAI Bot error:', err);
-  ctx.reply('🤖 Oops! ZOSAI encountered an issue. Our AI is learning from this error to serve you better. Please try again in a moment!');
+  ctx.reply('🤖 Oops! ZOSAI encountered an issue. Our AI is learning from this error to serve you better. Please try again in a moment!\n\nIf the problem persists, contact @zosai_support');
 });
 
 console.log('✅ ZOSAI Bot initialized successfully!');
