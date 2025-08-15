@@ -2,8 +2,8 @@
 
 # ZOSAI Bot Configuration
 BOT_TOKEN=8472455459:AAESlRVmWsuzsam9K6PYkz7Yw9-xpiPev_4
-WEBHOOK_URL=https://your-app-name.railway.app/webhook
-PORT=3000
+WEBHOOK_URL=https://zosai-bot-production.up.railway.app/webhook
+PORT=8080
 NODE_ENV=production
 
 # ZOSAI Branding

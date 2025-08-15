@@ -1,5 +1,3 @@
-
-
 const { Telegraf } = require('telegraf');
 const keyboards = require('./keyboards');
 const Redis = require('redis');
@@ -67,12 +65,7 @@ bot.use(async (ctx, next) => {
 });
 
 // /start command
-bot.start(async ctx => {
-  const user = ctx.from;
-  const text = `🤖 Welcome to ZOSAI, ${user.first_name}!
-Select your role:`;
-  await ctx.reply(text, keyboards.roleSelection);
-});
+bot.start(ctx => ctx.reply('Bot is working!'));
 
 // Role handlers
 bot.action('role_customer', async ctx => {
