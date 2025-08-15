@@ -30,6 +30,7 @@ app.use(bot.webhookCallback('/webhook'));
 
 // CRITICAL: bind to 0.0.0.0 for Railway
 const PORT = process.env.PORT || 8080;
+console.log('🔥 CUSTOM STARTUP CHECK — code v2.0');
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 ZOSAI Server listening on 0.0.0.0:${PORT}`);
 });
